@@ -52,7 +52,7 @@ And the following events have the greatest economic consequences  (from the most
 
 ```{r}
   par(mar = c(10,4,4,2) + 0.1)
-  barplot(head(worst_e)$economy/1000000, names.arg = head(worst_h)$EVTYPE,
+  barplot(head(worst_e)$economy/1000000, names.arg = head(worst_e)$EVTYPE,
           las=3,
           main="Property and crop damage in millions of USD by event type")
 ```
