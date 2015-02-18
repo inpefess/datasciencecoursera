@@ -1,6 +1,6 @@
-# Reproducible Research
+# The Most Harmful Storm Events in US
 Boris Shminke  
-17.02.2015  
+18.02.2015  
 
 ## Synopsis
 
@@ -9,7 +9,7 @@ In this report we use Strom Events data from National Weather Service to find ev
 ## Data Acquisition
 
 We download data if needed and read it from *bzip2*-file.
-This operation is cached because of it's quite time-consuming.
+This operation is cached because it is quite time-consuming.
 
 
 ```r
@@ -49,13 +49,30 @@ library(dplyr)
 
 ```r
 worst_h <- group_by(data, EVTYPE) %>% summarise(health=sum(FATALITIES)+sum(INJURIES)) %>% arrange(desc(health))
+worst_h_str <- paste(head(worst_h)$EVTYPE, collapse = ", ")
+worst_h_str
+```
+
+```
+## [1] "TORNADO, EXCESSIVE HEAT, TSTM WIND, FLOOD, LIGHTNING, HEAT"
+```
+
+```r
 worst_e <- group_by(data, EVTYPE) %>% summarise(economy=sum(PROPDMG)+sum(CROPDMG)) %>% arrange(desc(economy))
+worst_e_str <- paste(head(worst_e)$EVTYPE, collapse = ", ")
+worst_e_str
+```
+
+```
+## [1] "TORNADO, FLASH FLOOD, TSTM WIND, HAIL, FLOOD, THUNDERSTORM WIND"
 ```
 
 ## Results
 
 As we can see from data processing section, most harmful events with respect to population health are (from the most harmful to less): TORNADO, EXCESSIVE HEAT, TSTM WIND, FLOOD, LIGHTNING, HEAT.
 And the following events have the greatest economic consequences  (from the most harmful to less): TORNADO, FLASH FLOOD, TSTM WIND, HAIL, FLOOD, THUNDERSTORM WIND.
+
+We also provide two plots for better illustration of the results.
 
 
 ```r
@@ -69,7 +86,7 @@ And the following events have the greatest economic consequences  (from the most
 
 ```r
   par(mar = c(10,4,4,2) + 0.1)
-  barplot(head(worst_e)$economy/1000000, names.arg = head(worst_h)$EVTYPE,
+  barplot(head(worst_e)$economy/1000000, names.arg = head(worst_e)$EVTYPE,
           las=3,
           main="Property and crop damage in millions of USD by event type")
 ```

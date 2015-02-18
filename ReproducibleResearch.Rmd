@@ -1,7 +1,7 @@
 ---
-title: "Reproducible Research"
+title: "The Most Harmful Storm Events in US"
 author: "Boris Shminke"
-date: "17.02.2015"
+date: "18.02.2015"
 output:
   html_document:
     keep_md: true
@@ -14,7 +14,7 @@ In this report we use Strom Events data from National Weather Service to find ev
 ## Data Acquisition
 
 We download data if needed and read it from *bzip2*-file.
-This operation is cached because of it's quite time-consuming.
+This operation is cached because it is quite time-consuming.
 
 ```{r, cache=TRUE}
 bzfilename <- "repdata-data-StormData.csv.bz2"
@@ -36,13 +36,19 @@ We define economic consequences as total damage to property and crops.
 ```{r}
 library(dplyr)
 worst_h <- group_by(data, EVTYPE) %>% summarise(health=sum(FATALITIES)+sum(INJURIES)) %>% arrange(desc(health))
+worst_h_str <- paste(head(worst_h)$EVTYPE, collapse = ", ")
+worst_h_str
 worst_e <- group_by(data, EVTYPE) %>% summarise(economy=sum(PROPDMG)+sum(CROPDMG)) %>% arrange(desc(economy))
+worst_e_str <- paste(head(worst_e)$EVTYPE, collapse = ", ")
+worst_e_str
 ```
 
 ## Results
 
-As we can see from data processing section, most harmful events with respect to population health are (from the most harmful to less): `r paste(head(worst_h)$EVTYPE, collapse = ", ")`.
-And the following events have the greatest economic consequences  (from the most harmful to less): `r paste(head(worst_e)$EVTYPE, collapse = ", ")`.
+As we can see from data processing section, most harmful events with respect to population health are (from the most harmful to less): `r worst_h_str`.
+And the following events have the greatest economic consequences  (from the most harmful to less): `r worst_e_str`.
+
+We also provide two plots for better illustration of the results.
 
 ```{r}
   par(mar = c(10,4,4,2) + 0.1)
