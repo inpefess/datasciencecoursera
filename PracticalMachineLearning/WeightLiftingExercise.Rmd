@@ -1,0 +1,10 @@
+---
+title: "Weight Lifting Exercise"
+author: "Boris Shminke"
+date: "15.03.2015"
+output: html_document
+---
+
+```{r, echo=FALSE,cache=TRUE}
+data <- read.csv("pml-training.csv")
+```
