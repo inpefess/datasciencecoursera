@@ -6,11 +6,143 @@ output:
   html_document:
     keep_md: true
 ---
-I used [this web-page](http://topepo.github.io/caret/training.html) for `caret` examples and GBM as a model because Owen Zhang [recommends](http://www.slideshare.net/freshdatabos/zhang-winning-datasciencecompetitions) it for simple modelling when you don't know what to better do instead.
 
-First, I defined libraries used (`caret` surprisingly:)) and loaded data.
-```{r, echo=FALSE,cache=TRUE}
+## Introduction
+
+For meaningful introduction see [this site](http://groupware.les.inf.puc-rio.br/har).
+I used [this web-page](http://topepo.github.io/caret/training.html) for `caret` examples and GBM as a model because Owen Zhang [recommends](http://www.slideshare.net/freshdatabos/zhang-winning-datasciencecompetitions) it for simple modelling when you do not know what to better do instead.
+
+## Data acqusition and partitioning
+
+First, I defined libraries used, loaded data and set seed. For model tuning purposes I will use 2-fold cross-validation - an extremely fast method of assessing out of sample error. 2-fold cross validation is nearly the same as using 50/50 training and testing subsets.
+
+```{r, echo=FALSE, cache=TRUE, message=FALSE}
 library(caret)
-data <- read.csv("pml-training.csv")
+trellis.par.set(caretTheme())
+training <- read.csv("pml-training.csv")
+set.seed(17823)
+fitControl <- trainControl(
+  method = "repeatedcv",
+  number = 2,
+  repeats = 1,
+  verbose = TRUE)
 ```
 
+## Data cleansing and feature selection
+
+I used `View` command in RStudio to preview overall data quality. After that I cleansed data a bit. Some variables have too many NAs (more than in a half of observations) and some are actually record IDs (name, timestamp, window flags). So I just dropped them and did not use for prediction.
+
+```{r,cache=TRUE, echo=FALSE}
+training <- training[ , c(8:11,37:49,60:68,84:86,102,113:124,140,151:160)]
+```
+
+Since we have only predictors it is useless to use any compression technique like PCA.
+
+## Tuning number of trees
+
+First I tried 1000 trees, no interaction and 0.1 shrinkage.
+
+```{r, cache=TRUE, echo=FALSE}
+gbmGrid <- expand.grid(interaction.depth = 1,
+  n.trees = (1:20)*50,
+  shrinkage = 0.1)
+
+gbmFit1 <- train(classe ~ ., data = training,
+  method = "gbm",
+  trControl = fitControl,
+  tuneGrid = gbmGrid)
+```
+
+```{r}
+plot(gbmFit1)
+```
+
+This means that 90% accuracy is achieved with only 300 boosting iterations and that next 700 make little impact.
+
+## Shrinkage tuning
+
+Now we will try to pick optimal shrinkage from `0.05, 0.1, ..., 0.95, 1` list for 300 trees and no interaction.
+
+```{r, cache=TRUE, echo=FALSE}
+gbmGrid <- expand.grid(shrinkage = c(1:20) * 0.05,
+  n.trees = (1:30)*10,
+  interaction.depth = 1)
+
+gbmFit2 <- train(classe ~ ., data = training,
+  method = "gbm",
+  trControl = fitControl,
+  tuneGrid = gbmGrid)
+```
+
+```{r}
+plot(gbmFit2)
+```
+
+We can see that the larger shrinkage the better but for shrinkages more than `0.55` we encountered some problems.
+
+## Interaction depth tuning
+
+Of course, the more interaction depth, the better, but computations become more time consuming. So the next experiment is about picking the trade off for interaction depth from list `1:10`, 300 trees and 0.5 shrinkage.
+
+```{r, cache=TRUE, echo=FALSE}
+gbmGrid <- expand.grid(n.trees = (1:30)*10,
+  shrinkage = 0.5,
+  interaction.depth = c(1:10))
+
+gbmFit3 <- train(classe ~ ., data = training,
+  method = "gbm",
+  trControl = fitControl,
+  tuneGrid = gbmGrid)
+```
+
+```{r}
+plot(gbmFit3)
+```
+
+We can see that including interactions deeper than 5 is not very practical and also that number of trees can be decremented to 200 without accuracy loss.
+
+## Final estimation for out of sample error
+
+For more precise error estimation we will use standard 10-fold cross-validation technique.
+
+```{r, cache=TRUE, echo=FALSE}
+fitControl <- trainControl(
+  method = "repeatedcv",
+  number = 10,
+  repeats = 1,
+  verbose = TRUE)
+
+gbmGrid <- expand.grid(n.trees = (1:20)*10,
+  shrinkage = 0.5,
+  interaction.depth = 5)
+
+gbmFit4 <- train(classe ~ ., data = training,
+  method = "gbm",
+  trControl = fitControl,
+  tuneGrid = gbmGrid)
+```
+
+```{r}
+plot(gbmFit4)
+```
+
+Our model can be supposed to be highly accurate: about 99.5% Another way of testing model is uploading a test set.
+
+```{r, echo=FALSE}
+testing <- read.csv("pml-testing.csv")
+answers <- predict(gbmFit4, testing)
+ 
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+ 
+pml_write_files(answers)
+```
+
+
+
+## Conclusion
