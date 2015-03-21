@@ -80,24 +80,9 @@ set.seed(<span class="pl-c1">17823</span>)
   <span class="pl-v">tuneGrid</span> <span class="pl-k">=</span> <span class="pl-smi">gbmGrid</span>,
   <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)</pre></div>
 
-<pre><code>## Loading required package: gbm
-## Loading required package: survival
-## 
-## Attaching package: 'survival'
-## 
-## The following object is masked from 'package:caret':
-## 
-##     cluster
-## 
-## Loading required package: splines
-## Loading required package: parallel
-## Loaded gbm 2.1.1
-## Loading required package: plyr
-</code></pre>
-
 <div class="highlight highlight-r"><pre>plot(<span class="pl-smi">gbmFit1</span>)</pre></div>
 
-<p><img src="https://raw.githubusercontent.com/inpefess/datasciencecoursera/master/PracticalMachineLearning/WeightLiftingExercise_files/figure-html/unnamed-chunk-3-1.png" alt=""> </p>
+<p><img src="https://cloud.githubusercontent.com/assets/1696493/6766685/63165fc2-d021-11e4-8526-72e59a4caf34.png" alt="unnamed-chunk-3-1"></p>
 
 <p>This means that 90% accuracy is achieved with only 300 boosting iterations and that next 700 make little impact.</p>
 
@@ -118,7 +103,7 @@ set.seed(<span class="pl-c1">17823</span>)
 
 plot(<span class="pl-smi">gbmFit2</span>)</pre></div>
 
-<p><img src="https://raw.githubusercontent.com/inpefess/datasciencecoursera/master/PracticalMachineLearning/WeightLiftingExercise_files/figure-html/unnamed-chunk-4-1.png" alt=""> </p>
+<p><img src="https://cloud.githubusercontent.com/assets/1696493/6766686/633ac358-d021-11e4-8201-7064ca4cf062.png" alt="unnamed-chunk-4-1"></p>
 
 <p>We can see that large shrinkage is better but setting shrinkages more than <code>0.5</code> really gains nothing.</p>
 
@@ -139,7 +124,7 @@ plot(<span class="pl-smi">gbmFit2</span>)</pre></div>
 
 <div class="highlight highlight-r"><pre>plot(<span class="pl-smi">gbmFit3</span>)</pre></div>
 
-<p><img src="https://raw.githubusercontent.com/inpefess/datasciencecoursera/master/PracticalMachineLearning/WeightLiftingExercise_files/figure-html/unnamed-chunk-5-1.png" alt=""> </p>
+<p><img src="https://cloud.githubusercontent.com/assets/1696493/6766687/633c6a14-d021-11e4-8cd2-c332d049e472.png" alt="unnamed-chunk-5-1"></p>
 
 <p>We can see that including interactions deeper than 5 is not very practical and also that number of trees can be decremented to 200 without substantial accuracy loss.</p>
 
@@ -167,7 +152,7 @@ For more precise estimation we will use standard 10-fold cross-validation techni
 
 plot(<span class="pl-smi">gbmFit4</span>)</pre></div>
 
-<p><img src="https://raw.githubusercontent.com/inpefess/datasciencecoursera/master/PracticalMachineLearning/WeightLiftingExercise_files/figure-html/unnamed-chunk-6-1.png" alt=""> </p>
+<p><img src="https://cloud.githubusercontent.com/assets/1696493/6766684/62ba6f00-d021-11e4-9107-7b5f944f135f.png" alt="unnamed-chunk-6-1"></p>
 
 <p>Our model can be supposed to be highly accurate, about 99.5%</p>
 
