@@ -1,10 +1,16 @@
 ---
 title: "Weight Lifting Exercise"
 author: "Boris Shminke"
-date: "15.03.2015"
-output: html_document
+date: "21.03.2015"
+output:
+  html_document:
+    keep_md: true
 ---
+I used [this web-page](http://topepo.github.io/caret/training.html) for `caret` examples and GBM as a model because Owen Zhang [recommends](http://www.slideshare.net/freshdatabos/zhang-winning-datasciencecompetitions) it for simple modelling when you don't know what to better do instead.
 
+First, I defined libraries used (`caret` surprisingly:)) and loaded data.
 ```{r, echo=FALSE,cache=TRUE}
+library(caret)
 data <- read.csv("pml-training.csv")
 ```
+
