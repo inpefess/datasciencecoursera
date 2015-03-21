@@ -1,47 +1,244 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
     <title>WeightLiftingExercise by inpefess</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
+
+    <header>
+      <div class="container">
         <h1>WeightLiftingExercise</h1>
-        <p>http://groupware.les.inf.puc-rio.br/har</p>
+        <h2>http://groupware.les.inf.puc-rio.br/har</h2>
 
-        <p class="view"><a href="https://github.com/inpefess/datasciencecoursera">View the Project on GitHub <small>inpefess/datasciencecoursera</small></a></p>
+        <section id="downloads">
+          <a href="https://github.com/inpefess/datasciencecoursera/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/inpefess/datasciencecoursera/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/inpefess/datasciencecoursera" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
 
-
-        <ul>
-          <li><a href="https://github.com/inpefess/datasciencecoursera/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/inpefess/datasciencecoursera/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/inpefess/datasciencecoursera">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+    <div class="container">
+      <section id="main_content">
         <h1>
 <a id="weight-lifting-exercise" class="anchor" href="#weight-lifting-exercise" aria-hidden="true"><span class="octicon octicon-link"></span></a>Weight Lifting Exercise</h1>
 
 <p>Boris Shminke<br>
-15.03.2015  </p>
+21.03.2015  </p>
 
-<p><a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a></p>
+<h2>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h2>
+
+<p>For introduction about the data and complete research see <a href="http://groupware.les.inf.puc-rio.br/har">this site</a>.
+I used <a href="http://topepo.github.io/caret/training.html">this web-page</a> for <code>caret</code> examples and GBM as a model because Owen Zhang <a href="http://www.slideshare.net/freshdatabos/zhang-winning-datasciencecompetitions">recommends</a> it for simple modelling when you do not know what better to do instead.</p>
+
+<h2>
+<a id="data-acqusition-and-partitioning" class="anchor" href="#data-acqusition-and-partitioning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data acqusition and partitioning</h2>
+
+<p>First, I defined libraries used, loaded data and set seed. For model tuning purposes I will use 2-fold cross-validation - an extremely fast method of assessing out of sample error. 2-fold cross validation is practically the same as using 50/50 training and testing subsets.</p>
+
+<div class="highlight highlight-r"><pre>options(<span class="pl-v">warn</span><span class="pl-k">=</span><span class="pl-k">-</span><span class="pl-c1">1</span>)
+library(<span class="pl-smi">caret</span>)
+trellis.par.set(caretTheme())
+<span class="pl-smi">training</span> <span class="pl-k">&lt;-</span> read.csv(<span class="pl-s"><span class="pl-pds">"</span>pml-training.csv<span class="pl-pds">"</span></span>)
+set.seed(<span class="pl-c1">17823</span>)
+<span class="pl-smi">fitControl</span> <span class="pl-k">&lt;-</span> trainControl(
+  <span class="pl-v">method</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>repeatedcv<span class="pl-pds">"</span></span>,
+  <span class="pl-v">number</span> <span class="pl-k">=</span> <span class="pl-c1">2</span>,
+  <span class="pl-v">repeats</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>,
+  <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)</pre></div>
+
+<h2>
+<a id="data-cleansing-and-feature-selection" class="anchor" href="#data-cleansing-and-feature-selection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data cleansing and feature selection</h2>
+
+<p>I used <code>View</code> command in RStudio to preview overall data quality. After that I cleansed data a bit. Some variables have too many NAs (more than in a half of observations) and some are actually record IDs (name, timestamp, window flags). So I just dropped them and did not use for prediction.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">training</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[ , c(<span class="pl-c1">8</span><span class="pl-k">:</span><span class="pl-c1">11</span>,<span class="pl-c1">37</span><span class="pl-k">:</span><span class="pl-c1">49</span>,<span class="pl-c1">60</span><span class="pl-k">:</span><span class="pl-c1">68</span>,<span class="pl-c1">84</span><span class="pl-k">:</span><span class="pl-c1">86</span>,<span class="pl-c1">102</span>,<span class="pl-c1">113</span><span class="pl-k">:</span><span class="pl-c1">124</span>,<span class="pl-c1">140</span>,<span class="pl-c1">151</span><span class="pl-k">:</span><span class="pl-c1">160</span>)]</pre></div>
+
+<p>Since we have only 53 predictors it is useless to use any compression technique like PCA.</p>
+
+<h2>
+<a id="tuning-number-of-trees" class="anchor" href="#tuning-number-of-trees" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tuning number of trees</h2>
+
+<p>First I tried 1000 trees, no interaction and 0.1 shrinkage.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">gbmGrid</span> <span class="pl-k">&lt;-</span> expand.grid(<span class="pl-v">interaction.depth</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>,
+  <span class="pl-v">n.trees</span> <span class="pl-k">=</span> (<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">20</span>)<span class="pl-k">*</span><span class="pl-c1">50</span>,
+  <span class="pl-v">shrinkage</span> <span class="pl-k">=</span> <span class="pl-c1">0.1</span>)
+
+<span class="pl-smi">gbmFit1</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">classe</span> <span class="pl-k">~</span> ., <span class="pl-v">data</span> <span class="pl-k">=</span> <span class="pl-smi">training</span>,
+  <span class="pl-v">method</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gbm<span class="pl-pds">"</span></span>,
+  <span class="pl-v">trControl</span> <span class="pl-k">=</span> <span class="pl-smi">fitControl</span>,
+  <span class="pl-v">tuneGrid</span> <span class="pl-k">=</span> <span class="pl-smi">gbmGrid</span>,
+  <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)</pre></div>
+
+<pre><code>## Loading required package: gbm
+## Loading required package: survival
+## 
+## Attaching package: 'survival'
+## 
+## The following object is masked from 'package:caret':
+## 
+##     cluster
+## 
+## Loading required package: splines
+## Loading required package: parallel
+## Loaded gbm 2.1.1
+## Loading required package: plyr
+</code></pre>
+
+<div class="highlight highlight-r"><pre>plot(<span class="pl-smi">gbmFit1</span>)</pre></div>
+
+<p><img src="WeightLiftingExercise_files/figure-html/unnamed-chunk-3-1.png" alt=""> </p>
+
+<p>This means that 90% accuracy is achieved with only 300 boosting iterations and that next 700 make little impact.</p>
+
+<h2>
+<a id="shrinkage-tuning" class="anchor" href="#shrinkage-tuning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Shrinkage tuning</h2>
+
+<p>Now we will try to pick optimal shrinkage from <code>0.05, 0.1, ..., 0.95, 1</code> list for 300 trees and no interaction.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">gbmGrid</span> <span class="pl-k">&lt;-</span> expand.grid(<span class="pl-v">shrinkage</span> <span class="pl-k">=</span> c(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">20</span>) <span class="pl-k">*</span> <span class="pl-c1">0.05</span>,
+  <span class="pl-v">n.trees</span> <span class="pl-k">=</span> (<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">30</span>)<span class="pl-k">*</span><span class="pl-c1">10</span>,
+  <span class="pl-v">interaction.depth</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>)
+
+<span class="pl-smi">gbmFit2</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">classe</span> <span class="pl-k">~</span> ., <span class="pl-v">data</span> <span class="pl-k">=</span> <span class="pl-smi">training</span>,
+  <span class="pl-v">method</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gbm<span class="pl-pds">"</span></span>,
+  <span class="pl-v">trControl</span> <span class="pl-k">=</span> <span class="pl-smi">fitControl</span>,
+  <span class="pl-v">tuneGrid</span> <span class="pl-k">=</span> <span class="pl-smi">gbmGrid</span>,
+  <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)
+
+plot(<span class="pl-smi">gbmFit2</span>)</pre></div>
+
+<p><img src="WeightLiftingExercise_files/figure-html/unnamed-chunk-4-1.png" alt=""> </p>
+
+<p>We can see that large shrinkage is better but setting shrinkages more than <code>0.5</code> really gains nothing.</p>
+
+<h2>
+<a id="interaction-depth-tuning" class="anchor" href="#interaction-depth-tuning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Interaction depth tuning</h2>
+
+<p>Of course, the more interaction depth, the better, but computations become more time consuming. So the next experiment is about picking the trade off for interaction depth from list <code>1:10</code>, 300 trees and 0.5 shrinkage.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">gbmGrid</span> <span class="pl-k">&lt;-</span> expand.grid(<span class="pl-v">n.trees</span> <span class="pl-k">=</span> (<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">30</span>)<span class="pl-k">*</span><span class="pl-c1">10</span>,
+  <span class="pl-v">shrinkage</span> <span class="pl-k">=</span> <span class="pl-c1">0.5</span>,
+  <span class="pl-v">interaction.depth</span> <span class="pl-k">=</span> c(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">10</span>))
+
+<span class="pl-smi">gbmFit3</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">classe</span> <span class="pl-k">~</span> ., <span class="pl-v">data</span> <span class="pl-k">=</span> <span class="pl-smi">training</span>,
+  <span class="pl-v">method</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gbm<span class="pl-pds">"</span></span>,
+  <span class="pl-v">trControl</span> <span class="pl-k">=</span> <span class="pl-smi">fitControl</span>,
+  <span class="pl-v">tuneGrid</span> <span class="pl-k">=</span> <span class="pl-smi">gbmGrid</span>,
+  <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)</pre></div>
+
+<pre><code>## Warning: predictions failed for Fold1.Rep1: shrinkage=0.5, interaction.depth= 5, n.trees=300 Error in lvl[x] : invalid subscript type 'list'
+</code></pre>
+
+<pre><code>## Warning: predictions failed for Fold1.Rep1: shrinkage=0.5, interaction.depth=10, n.trees=300 Error in lvl[x] : invalid subscript type 'list'
+</code></pre>
+
+<pre><code>## Warning: predictions failed for Fold2.Rep1: shrinkage=0.5, interaction.depth= 5, n.trees=300 Error in lvl[x] : invalid subscript type 'list'
+</code></pre>
+
+<pre><code>## Warning: predictions failed for Fold2.Rep1: shrinkage=0.5, interaction.depth= 8, n.trees=300 Error in lvl[x] : invalid subscript type 'list'
+</code></pre>
+
+<pre><code>## Warning in nominalTrainWorkflow(x = x, y = y, wts = weights, info =
+## trainInfo, : There were missing values in resampled performance measures.
+</code></pre>
+
+<pre><code>## Warning in train.default(x, y, weights = w, ...): missing values found in
+## aggregated results
+</code></pre>
+
+<div class="highlight highlight-r"><pre>plot(<span class="pl-smi">gbmFit3</span>)</pre></div>
+
+<p><img src="WeightLiftingExercise_files/figure-html/unnamed-chunk-5-1.png" alt=""> </p>
+
+<p>We can see that including interactions deeper than 5 is not very practical and also that number of trees can be decremented to 200 without substantial accuracy loss.</p>
+
+<h2>
+<a id="final-estimations-for-out-of-sample-error" class="anchor" href="#final-estimations-for-out-of-sample-error" aria-hidden="true"><span class="octicon octicon-link"></span></a>Final estimations for out of sample error</h2>
+
+<p>To summarise, we have chosen a GBM model with 200 trees, 0.5 shrinkage and interactions of depth 5. Out accuracy estimate is about 99%.
+For more precise estimation we will use standard 10-fold cross-validation technique.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">fitControl</span> <span class="pl-k">&lt;-</span> trainControl(
+  <span class="pl-v">method</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>repeatedcv<span class="pl-pds">"</span></span>,
+  <span class="pl-v">number</span> <span class="pl-k">=</span> <span class="pl-c1">10</span>,
+  <span class="pl-v">repeats</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>,
+  <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)
+
+<span class="pl-smi">gbmGrid</span> <span class="pl-k">&lt;-</span> expand.grid(<span class="pl-v">n.trees</span> <span class="pl-k">=</span> (<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">20</span>)<span class="pl-k">*</span><span class="pl-c1">10</span>,
+  <span class="pl-v">shrinkage</span> <span class="pl-k">=</span> <span class="pl-c1">0.5</span>,
+  <span class="pl-v">interaction.depth</span> <span class="pl-k">=</span> <span class="pl-c1">5</span>)
+
+<span class="pl-smi">gbmFit4</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">classe</span> <span class="pl-k">~</span> ., <span class="pl-v">data</span> <span class="pl-k">=</span> <span class="pl-smi">training</span>,
+  <span class="pl-v">method</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>gbm<span class="pl-pds">"</span></span>,
+  <span class="pl-v">trControl</span> <span class="pl-k">=</span> <span class="pl-smi">fitControl</span>,
+  <span class="pl-v">tuneGrid</span> <span class="pl-k">=</span> <span class="pl-smi">gbmGrid</span>,
+  <span class="pl-v">verbose</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)
+
+plot(<span class="pl-smi">gbmFit4</span>)</pre></div>
+
+<p><img src="WeightLiftingExercise_files/figure-html/unnamed-chunk-6-1.png" alt=""> </p>
+
+<p>Our model can be supposed to be highly accurate, about 99.5%</p>
+
+<p>Another way of testing model is uploading a test set for evaluation. Let us generate required files.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">testing</span> <span class="pl-k">&lt;-</span> read.csv(<span class="pl-s"><span class="pl-pds">"</span>pml-testing.csv<span class="pl-pds">"</span></span>)
+<span class="pl-smi">answers</span> <span class="pl-k">&lt;-</span> predict(<span class="pl-smi">gbmFit4</span>, <span class="pl-smi">testing</span>)
+
+<span class="pl-v">pml_write_files</span> <span class="pl-k">=</span> <span class="pl-k">function</span>(<span class="pl-smi">x</span>){
+  <span class="pl-v">n</span> <span class="pl-k">=</span> length(<span class="pl-smi">x</span>)
+  <span class="pl-k">for</span>(<span class="pl-smi">i</span> <span class="pl-k">in</span> <span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-smi">n</span>){
+    <span class="pl-v">filename</span> <span class="pl-k">=</span> paste0(<span class="pl-s"><span class="pl-pds">"</span>problem_id_<span class="pl-pds">"</span></span>,<span class="pl-smi">i</span>,<span class="pl-s"><span class="pl-pds">"</span>.txt<span class="pl-pds">"</span></span>)
+    write.table(<span class="pl-smi">x</span>[<span class="pl-smi">i</span>],<span class="pl-v">file</span><span class="pl-k">=</span><span class="pl-smi">filename</span>,<span class="pl-v">quote</span><span class="pl-k">=</span><span class="pl-c1">FALSE</span>,<span class="pl-v">row.names</span><span class="pl-k">=</span><span class="pl-c1">FALSE</span>,<span class="pl-v">col.names</span><span class="pl-k">=</span><span class="pl-c1">FALSE</span>)
+  }
+}
+
+pml_write_files(<span class="pl-smi">answers</span>)</pre></div>
+
+<p>After manual submission to the course site we eventually faced 100% accuracy of prediction for our 20 test observations. This is another piece of evidence of the built model quality.</p>
+
+<h2>
+<a id="conclusion" class="anchor" href="#conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion</h2>
+
+<p>We have built Gradient Boosting Model for 200 decision trees with interactions of depth 5 and shrinkage 0.5 using this variable list:</p>
+
+<div class="highlight highlight-r"><pre>names(<span class="pl-smi">training</span>)</pre></div>
+
+<pre><code>##  [1] "roll_belt"            "pitch_belt"           "yaw_belt"            
+##  [4] "total_accel_belt"     "gyros_belt_x"         "gyros_belt_y"        
+##  [7] "gyros_belt_z"         "accel_belt_x"         "accel_belt_y"        
+## [10] "accel_belt_z"         "magnet_belt_x"        "magnet_belt_y"       
+## [13] "magnet_belt_z"        "roll_arm"             "pitch_arm"           
+## [16] "yaw_arm"              "total_accel_arm"      "gyros_arm_x"         
+## [19] "gyros_arm_y"          "gyros_arm_z"          "accel_arm_x"         
+## [22] "accel_arm_y"          "accel_arm_z"          "magnet_arm_x"        
+## [25] "magnet_arm_y"         "magnet_arm_z"         "roll_dumbbell"       
+## [28] "pitch_dumbbell"       "yaw_dumbbell"         "total_accel_dumbbell"
+## [31] "gyros_dumbbell_x"     "gyros_dumbbell_y"     "gyros_dumbbell_z"    
+## [34] "accel_dumbbell_x"     "accel_dumbbell_y"     "accel_dumbbell_z"    
+## [37] "magnet_dumbbell_x"    "magnet_dumbbell_y"    "magnet_dumbbell_z"   
+## [40] "roll_forearm"         "pitch_forearm"        "yaw_forearm"         
+## [43] "total_accel_forearm"  "gyros_forearm_x"      "gyros_forearm_y"     
+## [46] "gyros_forearm_z"      "accel_forearm_x"      "accel_forearm_y"     
+## [49] "accel_forearm_z"      "magnet_forearm_x"     "magnet_forearm_y"    
+## [52] "magnet_forearm_z"     "classe"
+</code></pre>
+
+<p>The model has high predicting power (ca. 99.5% accuracy) according to, first, 10-fold cross-validation performed on the training set and, second, scoring of independent test set from 20 observations.</p>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/inpefess">inpefess</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
               <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
